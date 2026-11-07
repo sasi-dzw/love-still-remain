@@ -179,7 +179,7 @@ git push
 
 - **纯静态**：没有服务端、数据库、登录、表单、评论，SQLi / RCE / 越权这类漏洞没有载体
 - **正文默认转义 HTML**：在 WP 里贴 `<script>`、`onerror` 之类只会显示成文字；`javascript:`、`data:` 链接会被过滤
-- **全站 CSP**：只允许同源脚本和样式，禁止内联脚本、iframe、表单提交
+- **全站 CSP**：只允许同源脚本和样式，禁止内联脚本、iframe、表单提交；默认也只允许本站图片
 - **没有第三方 JS / CSS / 字体**，不使用 Cookie（主题偏好存在 localStorage）
 
 仍需自己注意：
@@ -188,7 +188,9 @@ git push
 - 仓库是公开的：`draft = true` 只是不在网站显示，源码仍然可见；不要提交真实 flag、密钥或未公开题目的敏感内容
 - 删除的文章仍留在 git 历史里
 - GitHub Pages 不能自定义 HTTP 响应头，CSP 是通过 `<meta>` 实现的，`frame-ancestors`、HSTS 这类头用不了
-- 不要上传来源不明的 SVG（同源托管，直接打开时可能执行脚本）
+- 默认禁止 `static/` 里的 SVG（构建会直接报错）：SVG 直接打开时可能执行脚本，图请转成 PNG/WebP
+- 默认禁止正文引用外站图片：图床能看到访客 IP；图片放 `static/images/`。要放开就改 `blog.toml` 的 `allow_external_images`
+- 草稿放 `drafts/`（已 gitignore）；一旦提交，git 历史里就删不干净
 - Actions 用的是版本标签（`@v4`）而不是 commit SHA，供应链要求高的话可以自己改成 SHA 固定
 
 ## 版权

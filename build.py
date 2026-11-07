@@ -166,6 +166,8 @@ def load_config() -> dict:
     cfg.setdefault("github", "")
     cfg.setdefault("quote", "")
     cfg.setdefault("quote_by", "")
+    cfg.setdefault("allow_svg", False)
+    cfg.setdefault("allow_external_images", False)
     return cfg
 
 
@@ -261,12 +263,14 @@ FAVICON_SVG = (
 )
 FAVICON = "data:image/svg+xml," + quote(FAVICON_SVG, safe="")
 
-CSP = (
-    "default-src 'self'; base-uri 'none'; object-src 'none'; "
-    "frame-src 'none'; form-action 'none'; script-src 'self'; "
-    "style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; "
-    "connect-src 'none'; font-src 'self'"
-)
+def csp_policy() -> str:
+    img = "'self' data: https:" if CFG.get("allow_external_images") else "'self' data:"
+    return (
+        "default-src 'self'; base-uri 'none'; object-src 'none'; "
+        "frame-src 'none'; form-action 'none'; script-src 'self'; "
+        f"style-src 'self' 'unsafe-inline'; img-src {img}; "
+        "connect-src 'none'; font-src 'self'"
+    )
 
 
 def nav_html(root: str, active: str) -> str:
@@ -341,7 +345,7 @@ def layout(*, title: str, description: str, depth: int, body: str,
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="{CSP}">
+<meta http-equiv="Content-Security-Policy" content="{csp_policy()}">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
 <title>{esc(title)}</title>
@@ -850,6 +854,28 @@ def main() -> None:
     CFG = load_config()
     SITE_URL = (os.environ.get("SITE_URL") or CFG.get("url") or "").rstrip("/")
     POSTS = load_posts()
+
+    static_dir = ROOT / "static"
+    if not CFG.get("allow_svg"):
+        svgs = sorted(static_dir.rglob("*.svg")) if static_dir.is_dir() else []
+        if svgs:
+            names = "、".join(path.name for path in svgs)
+            raise SystemExit(
+                f"[错误] static/ 里有 SVG：{names}。"
+                "SVG 直接打开时可能执行脚本，请转成 PNG/WebP；"
+                "确实需要就在 blog.toml 里设置 allow_svg = true。"
+            )
+
+    if not CFG.get("allow_external_images"):
+        external = [
+            (post.title, match.group(1))
+            for post in POSTS
+            for match in re.finditer(r'<img[^>]+src="(https?://[^"]+)"', post.body)
+        ]
+        if external:
+            print("! 以下外站图片会被 CSP 拦截，建议下载到 static/images/：")
+            for title, url in external[:10]:
+                print(f"  - {title}：{url}")
 
     if OUT.exists():
         shutil.rmtree(OUT)

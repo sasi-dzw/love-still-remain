@@ -22,3 +22,7 @@ github = ""
 # 首页中间可选的题词，留空就不显示
 quote = ""
 quote_by = ""
+
+# 安全选项
+allow_svg = false              # static/ 里是否允许放 SVG（默认禁止，避免直接打开时执行脚本）
+allow_external_images = false  # 是否允许正文引用外站图片（默认禁止，避免图床记录访客 IP）

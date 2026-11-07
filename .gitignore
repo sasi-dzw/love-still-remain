@@ -8,6 +8,7 @@ __pycache__/
 # 截图 / 临时文件
 shots/
 .draft/
+drafts/
 
 # 系统
 .DS_Store
