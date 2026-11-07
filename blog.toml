@@ -13,7 +13,7 @@ start_year = 2026
 
 # 部署后的网址，用于 RSS / sitemap / canonical。
 # 用 GitHub Actions 部署时会自动替换成真实地址，本地构建时用这个。
-url = "https://sasi.github.io/love-still-remain"
+url = "https://sasi-dzw.github.io/love-still-remain"
 
 # 任选，留空则不显示
 email = ""
