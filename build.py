@@ -280,7 +280,6 @@ def nav_html(root: str, active: str) -> str:
     for href, label, key in items:
         current = ' aria-current="page"' if key == active else ""
         parts.append(f'<a href="{root}{href}"{current}>{label}</a>')
-    parts.append(f'<a class="nav-rss" href="{root}feed.xml">RSS</a>')
     return "\n      ".join(parts)
 
 
@@ -320,7 +319,6 @@ def footer_html(root: str, depth: int) -> str:
       <a href="{root}archive/">归档</a>
       <a href="{root}tags/">标签</a>
       <a href="{root}about/">关于</a>
-      <a href="{root}feed.xml">RSS</a>
     </nav>
     <p class="foot-note">© {span} {esc(CFG['author'])}<br>由 GitHub Pages 托管 · 用 Python 生成</p>
   </div>
@@ -492,19 +490,13 @@ def page_home() -> str:
     <div class="tag-cloud">{chips}</div>
   </section>
 
-  <section class="about-band shell reveal">
+  <section class="about-band about-band--solo shell reveal">
     <div class="about-card">
       <div class="monogram" aria-hidden="true">{esc(CFG['author'][:1].upper() or '·')}</div>
       <p class="kicker">关于我</p>
       <h2>{esc(CFG['author'])}</h2>
       <p>{esc(CFG['bio'])}</p>
       <a class="more" href="about/"><span>了解更多</span><span class="arrow">→</span></a>
-    </div>
-    <div class="subscribe-card">
-      <p class="kicker">订阅</p>
-      <h2>RSS 订阅</h2>
-      <p>用阅读器订阅更新。</p>
-      <a class="button" href="feed.xml">订阅 RSS <span>↗</span></a>
     </div>
   </section>
 </main>"""
@@ -743,8 +735,8 @@ def page_about() -> str:
         links.append(f'<a href="mailto:{esc(CFG["email"])}">写信</a>')
     if CFG["github"]:
         links.append(f'<a href="{esc(CFG["github"])}" rel="me">GitHub</a>')
-    links.append('<a href="../feed.xml">RSS</a>')
     link_html = '<span class="dot">·</span>'.join(links)
+    links_block = f'<p class="about-links">{link_html}</p>' if link_html else ""
     body = f"""<main id="main" class="page">
   <header class="page-head shell">
     <p class="eyebrow">About</p>
@@ -755,7 +747,7 @@ def page_about() -> str:
       <div class="portrait" aria-hidden="true"><span>{esc(CFG['author'][:1].lower() or '·')}</span></div>
       <p class="about-name">{esc(CFG['author'])}</p>
       <p class="about-role">{esc(CFG['role'])}</p>
-      <p class="about-links">{link_html}</p>
+      {links_block}
     </aside>
     <div class="prose about-prose">
       {about}

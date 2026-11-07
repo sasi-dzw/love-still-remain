@@ -588,6 +588,8 @@ button { font: inherit; color: inherit; }
   gap: clamp(24px, 4vw, 48px);
   padding-top: clamp(64px, 8vw, 100px);
 }
+.about-band--solo { grid-template-columns: 1fr; }
+.about-band--solo .about-card { max-width: 680px; }
 .about-card {
   position: relative;
   padding: clamp(28px, 4vw, 48px);
