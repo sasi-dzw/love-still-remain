@@ -813,6 +813,22 @@ button { font: inherit; color: inherit; }
   line-height: inherit;
 }
 
+.tagline:empty,
+.lede:empty,
+.foot-tagline:empty { display: none; }
+
+.empty {
+  padding: clamp(56px, 8vw, 96px) 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  text-align: center;
+}
+.empty code {
+  font-family: var(--mono);
+  font-size: .9em;
+  color: var(--accent-deep);
+}
+
 /* --------------------------------------------------------------------- 404 */
 .not-found {
   display: grid;

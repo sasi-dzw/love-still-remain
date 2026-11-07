@@ -392,7 +392,7 @@ def feature_html(post: "Post") -> str:
     {cover_html(post, "cover--lg")}
   </a>
   <div class="feature-body">
-    <p class="kicker">封面文章<span class="slash">/</span>{esc(post.tag)}</p>
+    <p class="kicker">置顶<span class="slash">/</span>{esc(post.tag)}</p>
     <h2 class="feature-title"><a href="{post.url}">{esc(post.title)}</a></h2>
     <p class="feature-deck">{esc(post.deck)}</p>
     {meta_html(post)}
@@ -415,7 +415,32 @@ def card_html(post: "Post") -> str:
 </article>"""
 
 
+def masthead_html() -> str:
+    return f"""<section class="masthead shell">
+    <p class="eyebrow">个人博客<span class="dot">·</span>{TODAY.year} 年 {TODAY.month} 月</p>
+    <h1 class="display">{CFG['display']}</h1>
+    <p class="tagline">{esc(CFG['tagline'])}</p>
+    <p class="lede">{esc(CFG['description'])}</p>
+    <div class="ornament" aria-hidden="true"><span></span><b>◆</b><span></span></div>
+  </section>"""
+
+
 def page_home() -> str:
+    if not POSTS:
+        body = f"""<main id="main">
+  {masthead_html()}
+  <section class="empty shell">
+    <p>还没有文章。在 <code>content/posts/</code> 里新建一篇 Markdown，提交后就会出现在这里。</p>
+  </section>
+</main>"""
+        return layout(
+            title=CFG["title"],
+            description=CFG["description"],
+            depth=0,
+            body=body,
+            path="",
+            body_class="page-home",
+        )
     featured = next((p for p in POSTS if p.featured), POSTS[0])
     rest = [p for p in POSTS if p is not featured][:4]
     counts = tag_counts()[:10]
@@ -445,13 +470,7 @@ def page_home() -> str:
 </section>"""
 
     body = f"""<main id="main">
-  <section class="masthead shell">
-    <p class="eyebrow">个人小刊<span class="dot">·</span>{TODAY.year} 年 {season(TODAY)}</p>
-    <h1 class="display">{CFG['display']}</h1>
-    <p class="tagline">{esc(CFG['tagline'])}</p>
-    <p class="lede">{esc(CFG['description'])}</p>
-    <div class="ornament" aria-hidden="true"><span></span><b>◆</b><span></span></div>
-  </section>
+  {masthead_html()}
 
   {feature_html(featured)}
 
@@ -461,7 +480,7 @@ def page_home() -> str:
 
   <section class="section shell">
     <div class="section-head">
-      <h2 class="section-title"><span class="section-no">03</span>旧页索引</h2>
+      <h2 class="section-title"><span class="section-no">03</span>标签</h2>
       <a class="section-link" href="tags/">按标签浏览 <span class="arrow">→</span></a>
     </div>
     <div class="tag-cloud">{chips}</div>
@@ -470,22 +489,21 @@ def page_home() -> str:
   <section class="about-band shell reveal">
     <div class="about-card">
       <div class="monogram" aria-hidden="true">{esc(CFG['author'][:1].upper() or '·')}</div>
-      <p class="kicker">关于编者</p>
+      <p class="kicker">关于我</p>
       <h2>{esc(CFG['author'])}</h2>
       <p>{esc(CFG['bio'])}</p>
       <a class="more" href="about/"><span>了解更多</span><span class="arrow">→</span></a>
     </div>
     <div class="subscribe-card">
       <p class="kicker">订阅</p>
-      <h2>把新文章收进阅读器</h2>
-      <p>本站提供 RSS：没有邮件，没有追踪，也没有算法。</p>
+      <h2>RSS 订阅</h2>
+      <p>用阅读器订阅更新。</p>
       <a class="button" href="feed.xml">订阅 RSS <span>↗</span></a>
-      <p class="fineprint">或者，偶尔来看看。</p>
     </div>
   </section>
 </main>"""
     return layout(
-        title=f"{CFG['title']} · {CFG['tagline']}",
+        title=f"{CFG['title']} · {CFG['tagline']}" if CFG["tagline"] else CFG["title"],
         description=CFG["description"],
         depth=0,
         body=body,
@@ -580,7 +598,7 @@ def page_post(post: "Post") -> str:
 
     <footer class="article-foot narrow">
       {pager_html(post)}
-      <p class="article-cta">谢谢你读到这里。<a href="../../archive/">去翻翻旧页 <span class="arrow">→</span></a></p>
+      <p class="article-cta"><a href="../../archive/">查看全部文章 <span class="arrow">→</span></a></p>
     </footer>
   </article>
 </main>"""
@@ -626,11 +644,15 @@ def page_archive() -> str:
     {archive_rows(years[year], root='../')}
   </div>
 </section>""")
+    if POSTS:
+        lede = f'共 {len(POSTS)} 篇，按年份排列。也可以<a href="../tags/">按标签浏览</a>。'
+    else:
+        lede = "还没有文章。"
     body = f"""<main id="main" class="page">
   <header class="page-head shell">
     <p class="eyebrow">Archive</p>
     <h1>归档</h1>
-    <p class="page-lede">共 {len(POSTS)} 篇，按年份排列。也可以<a href="../tags/">按标签浏览</a>。</p>
+    <p class="page-lede">{lede}</p>
   </header>
   <div class="shell archive">
     {''.join(blocks)}
@@ -655,11 +677,15 @@ def page_tags() -> str:
         f'<span class="tag-count">{n}</span></a>'
         for t, n in counts
     )
+    if counts:
+        lede = f"一共 {len(counts)} 个标签，{len(POSTS)} 篇文章。"
+    else:
+        lede = "还没有标签。"
     body = f"""<main id="main" class="page">
   <header class="page-head shell">
     <p class="eyebrow">Tags</p>
     <h1>标签</h1>
-    <p class="page-lede">一共 {len(counts)} 个标签，{len(POSTS)} 篇文章。挑一个顺眼的翻翻。</p>
+    <p class="page-lede">{lede}</p>
   </header>
   <div class="shell">
     <div class="tag-wall">{chips}</div>
@@ -732,7 +758,7 @@ def page_about() -> str:
 </main>"""
     return layout(
         title=f"关于 · {CFG['title']}",
-        description=f"关于 {CFG['author']} 和这本小刊。",
+        description=f"关于 {CFG['author']}。",
         depth=1,
         body=body,
         path="about/",
@@ -745,9 +771,9 @@ def page_about() -> str:
 def page_404() -> str:
     body = """<main id="main" class="page not-found">
   <div class="shell">
-    <p class="eyebrow">Lost</p>
+    <p class="eyebrow">404</p>
     <h1 class="nf-code">404</h1>
-    <p class="nf-text">这一页大概被折进了别的地方。<br>不如回到开头，重新翻一页。</p>
+    <p class="nf-text">页面不存在。</p>
     <a class="button" href="./">回到首页 <span>→</span></a>
   </div>
 </main>"""
@@ -822,8 +848,6 @@ def main() -> None:
     CFG = load_config()
     SITE_URL = (os.environ.get("SITE_URL") or CFG.get("url") or "").rstrip("/")
     POSTS = load_posts()
-    if not POSTS:
-        raise SystemExit("[错误] content/posts 里还没有文章")
 
     if OUT.exists():
         shutil.rmtree(OUT)

@@ -4,11 +4,11 @@
 
 title = "love still remain"
 display = "<em>sasi</em> 的博客"   # 首页大标题，可以含 HTML
-tagline = "把还留着的，写下来。"
-description = "sasi 的个人小刊：关于生活、阅读与代码，以及那些还留着的东西。"
+tagline = ""
+description = "技术笔记和日常记录。"
 author = "sasi"
-role = "写字的人"
-bio = "白天写代码，晚上写字。喜欢旧书店、雨声，和把一句话改到不能再改。"
+role = "博主"
+bio = "写代码，也写点东西。"
 start_year = 2026
 
 # 部署后的网址，用于 RSS / sitemap / canonical。
@@ -19,6 +19,6 @@ url = "https://sasi-dzw.github.io/love-still-remain"
 email = ""
 github = ""
 
-# 首页中间的那句题词
-quote = "写作是把时间折起来，留给以后的人拆。"
-quote_by = "编者"
+# 首页中间可选的题词，留空就不显示
+quote = ""
+quote_by = ""
