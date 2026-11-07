@@ -1,0 +1,24 @@
+# ---------------------------------------------------------------------------
+#  站点配置 —— 改这里的字，就能改掉全站的名字
+# ---------------------------------------------------------------------------
+
+title = "love still remain"
+display = "love <em>still</em> remain"   # 首页大标题，可以含 HTML
+tagline = "把还留着的，写下来。"
+description = "sasi 的个人小刊：关于生活、阅读与代码，以及那些还留着的东西。"
+author = "sasi"
+role = "写字的人"
+bio = "白天写代码，晚上写字。喜欢旧书店、雨声，和把一句话改到不能再改。"
+start_year = 2026
+
+# 部署后的网址，用于 RSS / sitemap / canonical。
+# 用 GitHub Actions 部署时会自动替换成真实地址，本地构建时用这个。
+url = "https://sasi.github.io/love-still-remain"
+
+# 任选，留空则不显示
+email = ""
+github = ""
+
+# 首页中间的那句题词
+quote = "写作是把时间折起来，留给以后的人拆。"
+quote_by = "编者"

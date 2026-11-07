@@ -1,0 +1,15 @@
+# 生成产物
+public/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# 截图 / 临时文件
+shots/
+.draft/
+
+# 系统
+.DS_Store
+Thumbs.db
+desktop.ini
