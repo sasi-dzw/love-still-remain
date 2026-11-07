@@ -38,6 +38,7 @@ PALETTES = ["clay", "olive", "dusk", "sand", "ink"]
 ASSET_VER = hashlib.md5(
     (THEME / "assets" / "style.css").read_bytes()
     + (THEME / "assets" / "app.js").read_bytes()
+    + (THEME / "assets" / "theme.js").read_bytes()
 ).hexdigest()[:8]
 SEASONS = {12: "冬", 1: "冬", 2: "冬", 3: "春", 4: "春", 5: "春",
            6: "夏", 7: "夏", 8: "夏", 9: "秋", 10: "秋", 11: "秋"}
@@ -260,12 +261,11 @@ FAVICON_SVG = (
 )
 FAVICON = "data:image/svg+xml," + quote(FAVICON_SVG, safe="")
 
-THEME_SCRIPT = (
-    "<script>(()=>{const r=document.documentElement;r.classList.add('js');"
-    "try{const q=new URLSearchParams(location.search).get('theme');"
-    "const s=localStorage.getItem('theme');"
-    "const d=matchMedia('(prefers-color-scheme: dark)').matches;"
-    "r.dataset.theme=q||s||(d?'dark':'light');}catch(e){}})();</script>"
+CSP = (
+    "default-src 'self'; base-uri 'none'; object-src 'none'; "
+    "frame-src 'none'; form-action 'none'; script-src 'self'; "
+    "style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; "
+    "connect-src 'none'; font-src 'self'"
 )
 
 
@@ -341,6 +341,8 @@ def layout(*, title: str, description: str, depth: int, body: str,
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="{CSP}">
+<meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
@@ -349,10 +351,10 @@ def layout(*, title: str, description: str, depth: int, body: str,
 <meta name="theme-color" content="#171310" media="(prefers-color-scheme: dark)">
 {canonical_tag}
 {og}
+<script src="{root}assets/theme.js?v={ASSET_VER}"></script>
 <link rel="stylesheet" href="{root}assets/style.css?v={ASSET_VER}">
 <link rel="alternate" type="application/rss+xml" title="{esc(CFG['title'])} · RSS" href="{root}feed.xml">
 <link rel="icon" href="{FAVICON}">
-{THEME_SCRIPT}
 {head_extra}
 </head>
 <body class="{body_class}">
@@ -788,9 +790,9 @@ def page_404() -> str:
 
 # --------------------------------------------------------------------------- 订阅
 def json_ld(data: dict) -> str:
-    return ('<script type="application/ld+json">'
-            + json.dumps(data, ensure_ascii=False)
-            + "</script>")
+    payload = json.dumps(data, ensure_ascii=False)
+    payload = payload.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    return '<script type="application/ld+json">' + payload + "</script>"
 
 
 def feed_xml() -> str:

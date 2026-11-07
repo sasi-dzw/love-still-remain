@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import html
 import re
+from urllib.parse import urlsplit
 
 _escape = html.escape
 
@@ -49,6 +50,26 @@ class Markdown:
         return text
 
     # ---------------------------------------------------------------- 行内
+    @staticmethod
+    def _safe_url(url: str) -> str | None:
+        """只放行 http(s)、mailto、相对路径；挡掉 javascript:、data: 等。"""
+        value = url.strip()
+        if not value:
+            return None
+        if value.startswith(("#", "/", "./", "../")):
+            if value.startswith("/\\"):
+                return None
+            return value
+        scheme = urlsplit(value).scheme.lower()
+        if scheme in ("http", "https", "mailto"):
+            return value
+        if scheme:
+            return None
+        # 没有 scheme 的写法，但冒号出现在路径前（如 javascript:alert）
+        if ":" in value.split("/", 1)[0]:
+            return None
+        return value
+
     def _inline(self, text: str) -> str:
         # 1. 行内代码（最先保护，内部不再解析任何语法）
         text = re.sub(
@@ -60,22 +81,32 @@ class Markdown:
         # 2. 图片
         def image(m: re.Match[str]) -> str:
             alt, src, caption = m.group(1), m.group(2), m.group(3) or m.group(1)
+            safe = self._safe_url(src)
+            if safe is None:
+                return self._keep(_escape(alt))
             cap = f"<figcaption>{self._inline(caption)}</figcaption>" if caption else ""
             return self._keep(
-                f'<figure><img src="{_escape(src, quote=True)}" '
+                f'<figure><img src="{_escape(safe, quote=True)}" '
                 f'alt="{_escape(alt, quote=True)}" loading="lazy" decoding="async">{cap}</figure>'
             )
 
-        text = re.sub(r"!\[([^\]]*)\]\((\S+?)(?:\s+\"([^\"]*)\")?\)", image, text)
+        text = re.sub(
+            r"!\[([^\]]*)\]\(((?:[^()\s]|\([^()]*\))+)(?:\s+\"([^\"]*)\")?\)",
+            image,
+            text,
+        )
 
         # 3. 链接
         def link(m: re.Match[str]) -> str:
             label, href = m.group(1), m.group(2)
+            safe = self._safe_url(href)
+            if safe is None:
+                return self._keep(self._inline(label))
             return self._keep(
-                f'<a href="{_escape(href, quote=True)}">{self._inline(label)}</a>'
+                f'<a href="{_escape(safe, quote=True)}">{self._inline(label)}</a>'
             )
 
-        text = re.sub(r"\[([^\]]+)\]\((\S+?)\)", link, text)
+        text = re.sub(r"\[([^\]]+)\]\(((?:[^()\s]|\([^()]*\))+)\)", link, text)
 
         # 4. 裸链接
         text = re.sub(
@@ -86,15 +117,10 @@ class Markdown:
             text,
         )
 
-        # 5. 内联 HTML 原样保留
-        text = re.sub(
-            r"</?[a-zA-Z][^>]*>", lambda m: self._keep(m.group(0)), text
-        )
-
-        # 6. 转义剩余字符
+        # 5. 转义剩余字符；原始 HTML 一律当文本显示，防止正文里的 payload 被执行
         text = _escape(text, quote=False)
 
-        # 7. 强调
+        # 6. 强调
         text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
         text = re.sub(r"(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])", r"<em>\1</em>", text)
         text = re.sub(r"~~(.+?)~~", r"<del>\1</del>", text)
@@ -135,8 +161,9 @@ class Markdown:
     _UL = re.compile(r"^\s{0,3}[-*+]\s+(.*)$")
     _OL = re.compile(r"^\s{0,3}\d{1,3}[.)]\s+(.*)$")
     _FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})\s*([\w+#.\-]*)\s*$")
-    _TAG_BLOCK = re.compile(r"^\s*</?[a-zA-Z][\w-]*(\s[^>]*)?>")
-    _IMG_ONLY = re.compile(r"^!\[([^\]]*)\]\((\S+?)(?:\s+\"([^\"]*)\")?\)$")
+    _IMG_ONLY = re.compile(
+        r"^!\[([^\]]*)\]\(((?:[^()\s]|\([^()]*\))+)(?:\s+\"([^\"]*)\")?\)$"
+    )
 
     def _is_block_start(self, lines: list[str], i: int) -> bool:
         line = lines[i]
@@ -149,8 +176,6 @@ class Markdown:
         if line.lstrip().startswith(">"):
             return True
         if self._UL.match(line) or self._OL.match(line):
-            return True
-        if self._TAG_BLOCK.match(line):
             return True
         if "|" in line and i + 1 < len(lines) and self._is_table_sep(lines[i + 1]):
             return True
@@ -271,15 +296,6 @@ class Markdown:
                 tag = "ol" if ordered else "ul"
                 lis = "".join(f"<li>{self._inline(it)}</li>" for it in items)
                 out.append(f"<{tag}>{lis}</{tag}>")
-                continue
-
-            # 原始 HTML 块
-            if self._TAG_BLOCK.match(line):
-                buf = []
-                while i < n and lines[i].strip():
-                    buf.append(lines[i])
-                    i += 1
-                out.append("\n".join(buf))
                 continue
 
             # 段落

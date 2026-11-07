@@ -23,7 +23,7 @@ love-still-remain/
 ├─ content/
 │  ├─ posts/             # 文章（Markdown + TOML front matter）
 │  └─ about.md           # 关于页
-├─ theme/assets/         # style.css / app.js
+├─ theme/assets/         # style.css / app.js / theme.js
 ├─ static/               # 原样复制到站点根目录（放图片）
 ├─ public/               # 生成结果（已 gitignore）
 ├─ scripts/
@@ -172,6 +172,24 @@ git push
 
 **想换主题或加评论？**
 评论可以接 Giscus（基于 GitHub Discussions）；想用现成主题体系也可以整体迁到 Hexo/Hugo，Markdown 文章基本可以直接搬。
+
+## 安全
+
+这套站点的攻击面很小，但不是「绝对安全」，几件事说明白：
+
+- **纯静态**：没有服务端、数据库、登录、表单、评论，SQLi / RCE / 越权这类漏洞没有载体
+- **正文默认转义 HTML**：在 WP 里贴 `<script>`、`onerror` 之类只会显示成文字；`javascript:`、`data:` 链接会被过滤
+- **全站 CSP**：只允许同源脚本和样式，禁止内联脚本、iframe、表单提交
+- **没有第三方 JS / CSS / 字体**，不使用 Cookie（主题偏好存在 localStorage）
+
+仍需自己注意：
+
+- GitHub 账号是整条链路的关键，务必开双重验证（2FA / Passkey）
+- 仓库是公开的：`draft = true` 只是不在网站显示，源码仍然可见；不要提交真实 flag、密钥或未公开题目的敏感内容
+- 删除的文章仍留在 git 历史里
+- GitHub Pages 不能自定义 HTTP 响应头，CSP 是通过 `<meta>` 实现的，`frame-ancestors`、HSTS 这类头用不了
+- 不要上传来源不明的 SVG（同源托管，直接打开时可能执行脚本）
+- Actions 用的是版本标签（`@v4`）而不是 commit SHA，供应链要求高的话可以自己改成 SHA 固定
 
 ## 版权
 
