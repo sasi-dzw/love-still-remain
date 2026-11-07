@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------
 
 title = "love still remain"
-display = "love <em>still</em> remain"   # 首页大标题，可以含 HTML
+display = "<em>sasi</em> 的博客"   # 首页大标题，可以含 HTML
 tagline = "把还留着的，写下来。"
 description = "sasi 的个人小刊：关于生活、阅读与代码，以及那些还留着的东西。"
 author = "sasi"
